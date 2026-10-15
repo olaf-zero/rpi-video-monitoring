@@ -1,0 +1,8 @@
+__pychache__/
+.venv
+*.pyc
+
+.env
+
+media/*
+!media/.gitkeep
