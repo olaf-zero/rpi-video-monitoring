@@ -1,14 +1,17 @@
-from app.VideoStream import VideoStream
+from app.video_stream import VideoStream
+from app.telemetry import get_system_stats
+
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+
 import time
 
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-camera = VideoStream(source="media/sample.mp4")
+camera = VideoStream(source=0) # "media/sample.mp4" - testowy plik.mp4; 0 - obraz z domyślnej kamery
 
 @app.get("/")
 def test():
@@ -20,6 +23,10 @@ def video_feed():
         mjpeg_generator(), 
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
+
+@app.get("/api/telemetry")
+def telemetry():
+    return get_system_stats()
 
 def mjpeg_generator():
     while True:
