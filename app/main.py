@@ -5,7 +5,10 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
+from fastapi import HTTPException
+
 import time
+
 
 app = FastAPI()
 
@@ -17,6 +20,7 @@ camera = VideoStream(source=0) # "media/sample.mp4" - testowy plik.mp4; 0 - obra
 def test():
     return FileResponse("static/index.html")
 
+
 @app.get("/video_feed")
 def video_feed():
     return StreamingResponse(
@@ -24,9 +28,21 @@ def video_feed():
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
 
+
 @app.get("/api/telemetry")
 def telemetry():
     return get_system_stats()
+
+
+@app.post("/api/snapshot")
+def take_snapshot():
+    file_name = camera.get_snapshot()
+
+    if file_name == None:
+        raise HTTPException(status_code=500, detail="Nie udało się zapisać klatki.")
+    else:
+        return {"status": "ok", "file_name": file_name}
+
 
 def mjpeg_generator():
     while True:

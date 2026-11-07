@@ -1,6 +1,9 @@
 import cv2
 import threading
 import time
+import os
+
+from datetime import datetime
 
 class VideoStream:
     def __init__(self, source = "media/sample.mp4"):
@@ -19,6 +22,8 @@ class VideoStream:
         self.camera_thread = threading.Thread(target=self._update_frame, daemon=True)
         self.camera_thread.start()
 
+        os.makedirs("media", exist_ok=True)
+
 
     def get_jpg_frame(self):
         with self.lock:
@@ -30,6 +35,23 @@ class VideoStream:
         converted, jpg_frame = cv2.imencode(".jpg", frame)
 
         return jpg_frame.tobytes() if converted else None
+
+
+    def get_snapshot(self):
+        with self.lock:
+            if self.current_frame is None:
+                return None
+
+            frame = self.current_frame.copy()
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_name = f"snap_{timestamp}.jpg"
+
+        file_path = os.path.join("media", file_name)
+
+        ret = cv2.imwrite(filename=file_path, img=frame)
+
+        return file_name if ret else None
 
 
     def _update_frame(self):
