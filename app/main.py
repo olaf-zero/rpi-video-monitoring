@@ -7,8 +7,12 @@ from fastapi.staticfiles import StaticFiles
 
 from fastapi import HTTPException
 
-import time
+import asyncio
 
+# TODO
+#  1. Zobaczyć PyAV do kompresji klatek do nagrywania klipów
+#  2. Dodać oznaczenia do obrazu z kamery - data godzina itp. 
+#  3. ustawienia - rozdzielczość, fps, cos jeszcze
 
 app = FastAPI()
 
@@ -23,9 +27,15 @@ def test():
 
 @app.get("/video_feed")
 def video_feed():
-    return StreamingResponse(
-        mjpeg_generator(), 
-        media_type="multipart/x-mixed-replace; boundary=frame"
+    return StreamingResponse( 
+        mjpeg_generator(),  
+        media_type="multipart/x-mixed-replace; boundary=frame",
+        headers={ # optymalizjcja tunelowania
+            "Cache-Control": "no-cache, no-store, must-revalidate, private, no-transform",
+            "Pragma": "no-cache",
+            "Expires": "0",
+            "X-Accel-Buffering": "no"
+        }
     )
 
 
@@ -44,13 +54,11 @@ def take_snapshot():
         return {"status": "ok", "file_name": file_name}
 
 
-def mjpeg_generator():
-    while True:
-        frame_bytes = camera.get_jpg_frame()
-
-        if frame_bytes:
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-
-        time.sleep(0.03)
-        
+async def mjpeg_generator(): 
+    while True: 
+        frame_bytes = camera.get_jpg_frame() 
+        if frame_bytes: 
+            yield (b'--frame\r\n' 
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n') 
+        # 30 FPS
+        await asyncio.sleep(0.033)

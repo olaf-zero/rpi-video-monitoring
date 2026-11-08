@@ -32,7 +32,9 @@ class VideoStream:
 
             frame = self.current_frame.copy()
 
-        converted, jpg_frame = cv2.imencode(".jpg", frame)
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+
+        converted, jpg_frame = cv2.imencode(".jpg", frame, encode_param)
 
         return jpg_frame.tobytes() if converted else None
 
